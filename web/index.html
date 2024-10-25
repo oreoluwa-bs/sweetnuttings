@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>WebSocket Messaging</title>
+    </head>
+    <body>
+        <h1>WebSocket Chat</h1>
+
+        <button onclick="joinRoom('public')">Join default</button>
+
+        <div id="messages">
+            <!-- Incoming messages will be displayed here -->
+        </div>
+
+        <input type="text" id="messageInput" placeholder="Enter your message" />
+        <button onclick="sendMessage()">Send</button>
+
+        <script src="app.js"></script>
+    </body>
+</html>
