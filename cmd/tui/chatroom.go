@@ -11,7 +11,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/oreoluwa-bs/sweetnuttings/cmd/client/constants"
+	"github.com/oreoluwa-bs/sweetnuttings/cmd/tui/constants"
 )
 
 type Chatroom struct {

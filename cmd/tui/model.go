@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/oreoluwa-bs/sweetnuttings/cmd/client/constants"
+	"github.com/oreoluwa-bs/sweetnuttings/cmd/tui/constants"
 )
 
 type model struct {
