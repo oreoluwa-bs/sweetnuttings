@@ -64,6 +64,9 @@ func (cw ChatWindow) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cw.viewport.Height = msg.Height
 	case tea.KeyMsg:
 		switch {
+		case key.Matches(msg, constants.Keymap.Back):
+			m := NewModel()
+			return m.chatroom.Update(msg)
 		case key.Matches(msg, constants.Keymap.Enter):
 			v := cw.textarea.Value()
 
@@ -91,7 +94,7 @@ func (cw ChatWindow) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cw.textarea.Reset()
 			cw.viewport.GotoBottom()
 
-			return cw, tea.Quit
+			return cw, nil
 		}
 	}
 

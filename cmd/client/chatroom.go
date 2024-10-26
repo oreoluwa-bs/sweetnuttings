@@ -14,11 +14,6 @@ import (
 	"github.com/oreoluwa-bs/sweetnuttings/cmd/client/constants"
 )
 
-const (
-	chatroomListView = iota
-	chatwindowView
-)
-
 type Chatroom struct {
 	ID       string        `json:"id"`
 	Name     string        `json:"name"`
@@ -67,11 +62,9 @@ func getChatRooms() ([]Chatroom, error) {
 }
 
 type chatroomModel struct {
-	currentView currentView
-
-	rooms list.Model
-
-	window tea.Model
+	rooms            list.Model
+	activeChatWindow tea.Model
+	choosingRoom     bool
 }
 
 func NewChatroomModel() tea.Model {
@@ -82,7 +75,8 @@ func NewChatroomModel() tea.Model {
 	}
 
 	m := chatroomModel{
-		rooms: list.New(chatroomsToListItem(rs), list.NewDefaultDelegate(), 0, 0),
+		rooms:        list.New(chatroomsToListItem(rs), list.NewDefaultDelegate(), 0, 0),
+		choosingRoom: true,
 	}
 	m.rooms.Title = "Chat rooms"
 
@@ -95,48 +89,56 @@ func (m chatroomModel) Init() tea.Cmd {
 
 func (m chatroomModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-	var cmds []tea.Cmd
 
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.rooms.SetSize(msg.Width, msg.Height)
-	case tea.KeyMsg:
-		switch {
-		case key.Matches(msg, constants.Keymap.Quit):
-			return m, tea.Quit
-		case key.Matches(msg, constants.Keymap.Enter):
-			activeRoom := m.rooms.SelectedItem().(Chatroom)
-			cw := NewChatWindow(activeRoom.ID)
-			m.currentView = chatwindowView
-			m.window = cw
-		default:
-			m.rooms, cmd = m.rooms.Update(msg)
+	if m.choosingRoom {
+		switch msg := msg.(type) {
+		case tea.WindowSizeMsg:
+			m.rooms.SetSize(msg.Width, msg.Height)
+		case tea.KeyMsg:
+			switch {
+			case key.Matches(msg, constants.Keymap.Quit):
+				return m, tea.Quit
+			case key.Matches(msg, constants.Keymap.Enter):
+				// Enter chat window for selected room
+				activeRoom := m.rooms.SelectedItem().(Chatroom)
+				m.activeChatWindow = NewChatWindow(activeRoom.ID)
+				m.choosingRoom = false
+				return m, nil
+			default:
+				m.rooms, cmd = m.rooms.Update(msg)
+				return m, cmd
+			}
 		}
+	} else if m.activeChatWindow != nil {
+		var newWindow tea.Model
+		newWindow, cmd = m.activeChatWindow.Update(msg)
+
+		// Debug log to track key handling
+		if keyMsg, ok := msg.(tea.KeyMsg); ok {
+			// fmt.Printf("Key pressed: %s\n", keyMsg.String())
+			if key.Matches(keyMsg, constants.Keymap.Back) {
+				// fmt.Println("Back key pressed")
+				m.choosingRoom = true
+				m.activeChatWindow = nil
+				return m, nil
+			}
+		}
+
+		m.activeChatWindow = newWindow
 	}
 
-	switch m.currentView {
-	case chatwindowView:
-		newR, newCmd := m.window.Update(msg)
-		rm, ok := newR.(ChatWindow)
-		if !ok {
-			panic("could not assert that the model is a chat window ui model")
-		}
-
-		m.window = rm
-		cmd = newCmd
-	}
-
-	cmds = append(cmds, cmd)
-	return m, tea.Batch(cmds...)
+	return m, cmd
 }
 
 func (m chatroomModel) View() string {
-	switch m.currentView {
-	case chatwindowView:
-		return m.window.View()
-	default:
+
+	if m.choosingRoom {
 		return m.rooms.View()
 	}
+	if m.activeChatWindow != nil {
+		return m.activeChatWindow.View()
+	}
+	return ""
 }
 
 func chatroomsToListItem(ch []Chatroom) []list.Item {
